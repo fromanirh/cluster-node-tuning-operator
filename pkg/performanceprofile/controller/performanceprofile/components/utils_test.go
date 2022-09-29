@@ -52,6 +52,13 @@ var _ = Describe("Components utils", func() {
 				Expect(cpuSetFromList).Should(Equal(cpuSetFromMask))
 			}
 		})
+
+		It("should handle empty CPU mask", func() {
+			emptyMask := "00000000,00000000"
+			cpuSetFromMask, err := CPUMaskToCPUSet(emptyMask)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(cpuSetFromMask.IsEmpty()).To(BeTrue())
+		})
 	})
 
 	Context("Check intersections between CPU sets", func() {
