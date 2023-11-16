@@ -27,20 +27,20 @@ func mergeMaps(src map[string]string, dst map[string]string) {
 
 // TODO: we should merge all create, get and delete methods
 
-func (r *PerformanceProfileReconciler) getMachineConfig(name string) (*mcov1.MachineConfig, error) {
+func (r *PerformanceProfileReconciler) getMachineConfig(ctx context.Context, name string) (*mcov1.MachineConfig, error) {
 	mc := &mcov1.MachineConfig{}
 	key := types.NamespacedName{
 		Name:      name,
 		Namespace: metav1.NamespaceNone,
 	}
-	if err := r.Get(context.TODO(), key, mc); err != nil {
+	if err := r.Get(ctx, key, mc); err != nil {
 		return nil, err
 	}
 	return mc, nil
 }
 
-func (r *PerformanceProfileReconciler) getMutatedMachineConfig(mc *mcov1.MachineConfig) (*mcov1.MachineConfig, error) {
-	existing, err := r.getMachineConfig(mc.Name)
+func (r *PerformanceProfileReconciler) getMutatedMachineConfig(ctx context.Context, mc *mcov1.MachineConfig) (*mcov1.MachineConfig, error) {
+	existing, err := r.getMachineConfig(ctx, mc.Name)
 	if errors.IsNotFound(err) {
 		return mc, nil
 	}
@@ -77,7 +77,7 @@ func (r *PerformanceProfileReconciler) getClusterOperator() (*apiconfigv1.Cluste
 }
 
 func (r *PerformanceProfileReconciler) createOrUpdateMachineConfig(mc *mcov1.MachineConfig) error {
-	_, err := r.getMachineConfig(mc.Name)
+	_, err := r.getMachineConfig(context.TODO(), mc.Name)
 	if errors.IsNotFound(err) {
 		klog.Infof("Create machine-config %q", mc.Name)
 		if err := r.Create(context.TODO(), mc); err != nil {
@@ -95,7 +95,7 @@ func (r *PerformanceProfileReconciler) createOrUpdateMachineConfig(mc *mcov1.Mac
 }
 
 func (r *PerformanceProfileReconciler) deleteMachineConfig(name string) error {
-	mc, err := r.getMachineConfig(name)
+	mc, err := r.getMachineConfig(context.TODO(), name)
 	if errors.IsNotFound(err) {
 		return nil
 	}
