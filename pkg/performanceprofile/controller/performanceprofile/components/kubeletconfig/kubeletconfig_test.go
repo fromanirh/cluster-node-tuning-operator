@@ -195,6 +195,5 @@ var _ = Describe("Kubelet Config", func() {
 			Expect(manifest).To(ContainSubstring("net.core.somaxconn"))
 			Expect(manifest).To(ContainSubstring(`full-pcpus-only: "false"`))
 		})
-
 	})
 })

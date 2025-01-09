@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/cluster-node-tuning-operator/pkg/performanceprofile/controller/performanceprofile/components/kubeletconfig"
 	"github.com/openshift/cluster-node-tuning-operator/pkg/performanceprofile/controller/performanceprofile/components/machineconfig"
 	profilecomponent "github.com/openshift/cluster-node-tuning-operator/pkg/performanceprofile/controller/performanceprofile/components/profile"
+	profileutil "github.com/openshift/cluster-node-tuning-operator/pkg/performanceprofile/controller/performanceprofile/components/profile"
 	"github.com/openshift/cluster-node-tuning-operator/pkg/performanceprofile/controller/performanceprofile/components/runtimeclass"
 	"github.com/openshift/cluster-node-tuning-operator/pkg/performanceprofile/controller/performanceprofile/components/tuned"
 
@@ -53,7 +54,9 @@ func (ms *ManifestResultSet) ToManifestTable() ManifestTable {
 func GetNewComponents(profile *performancev2.PerformanceProfile, opts *components.Options) (*ManifestResultSet, error) {
 	machineConfigPoolSelector := profilecomponent.GetMachineConfigPoolSelector(profile, opts.ProfileMCP)
 
-	mc, err := machineconfig.New(profile, &opts.MachineConfig)
+	mcOpts := opts.MachineConfig.Clone()
+	mcOpts.LLCFileEnabled = profileutil.IsLLCAlignmentEnabled(profile)
+	mc, err := machineconfig.New(profile, mcOpts)
 	if err != nil {
 		return nil, err
 	}

@@ -17,6 +17,10 @@ import (
 )
 
 const (
+	CPUManagerPolicyOptionPreferAlignCPUsByUncoreCache = "prefer-align-cpus-by-uncorecache"
+)
+
+const (
 	// experimentalKubeletSnippetAnnotation contains the annotation key that should be used to provide a KubeletConfig snippet with additional
 	// configurations you want to apply on top of the generated KubeletConfig resource.
 	// To find the specific argument see https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/.
@@ -46,16 +50,9 @@ const (
 // New returns new KubeletConfig object for performance sensetive workflows
 func New(profile *performancev2.PerformanceProfile, opts *components.KubeletConfigOptions) (*machineconfigv1.KubeletConfig, error) {
 	name := components.GetComponentName(profile.Name, components.ComponentNamePrefix)
-	kubeletConfig := &kubeletconfigv1beta1.KubeletConfiguration{}
-	if v, ok := profile.Annotations[experimentalKubeletSnippetAnnotation]; ok {
-		if err := json.Unmarshal([]byte(v), kubeletConfig); err != nil {
-			return nil, err
-		}
-	}
-
-	kubeletConfig.TypeMeta = metav1.TypeMeta{
-		APIVersion: kubeletconfigv1beta1.SchemeGroupVersion.String(),
-		Kind:       "KubeletConfiguration",
+	kubeletConfig, err := NewFromExperimentalAnnotation(profile)
+	if err != nil {
+		return nil, err
 	}
 
 	kubeletConfig.CPUManagerPolicy = cpuManagerPolicyStatic
@@ -192,4 +189,19 @@ func addStringToQuantity(q *resource.Quantity, value string) error {
 	q.Add(v)
 
 	return nil
+}
+
+func NewFromExperimentalAnnotation(profile *performancev2.PerformanceProfile) (*kubeletconfigv1beta1.KubeletConfiguration, error) {
+	kubeletConfig := &kubeletconfigv1beta1.KubeletConfiguration{}
+	kubeletConfig.TypeMeta = metav1.TypeMeta{
+		APIVersion: kubeletconfigv1beta1.SchemeGroupVersion.String(),
+		Kind:       "KubeletConfiguration",
+	}
+
+	if v, ok := profile.Annotations[experimentalKubeletSnippetAnnotation]; ok {
+		if err := json.Unmarshal([]byte(v), kubeletConfig); err != nil {
+			return nil, err
+		}
+	}
+	return kubeletConfig, nil
 }
